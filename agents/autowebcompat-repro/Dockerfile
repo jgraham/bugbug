@@ -41,6 +41,25 @@ RUN apt-get update \
         libasound2 libpci3 \
     && rm -rf /var/lib/apt/lists/*
 
+# The Android emulator (and the SDK tooling in android.py) is installed at
+# runtime via the command-line tools, but needs system-level support baked in:
+#   - unzip: download_and_extract() shells out to `unzip` to unpack the SDK.
+#   - default-jre-headless: sdkmanager/avdmanager are Java programs.
+#   - the X11/GL/audio shared libraries the x86_64 emulator binary dlopens,
+#     even when run headless (it bundles its own Qt, so no system Qt is needed).
+# The emulator still requires /dev/kvm from the host for hardware acceleration;
+# that is a runtime concern granted by the compose file, not a build dependency.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        unzip \
+        default-jre-headless \
+        libgl1 libglu1-mesa \
+        libpulse0 \
+        libnss3 \
+        libx11-6 libxext6 libxdamage1 libxfixes3 libxrender1 \
+        libxcomposite1 libxcursor1 libxi6 libxrandr2 \
+    && rm -rf /var/lib/apt/lists/*
+
 # hackbot.toml lives at the agent root (not inside the package), so copy it into
 # the working dir; the runtime discovers it there (cwd) at startup.
 COPY agents/autowebcompat-repro/hackbot.toml /app/hackbot.toml

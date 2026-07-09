@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import sys
 import tempfile
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -29,6 +30,7 @@ from hackbot_runtime import AgentError
 from hackbot_runtime.claude import Reporter
 from pydantic import BaseModel
 
+from . import android
 from .browser import FirefoxBrowsers
 from .config import BUGZILLA_READ_TOOLS, DEVTOOLS_TOOLS
 from .devtools_mcp import build_devtools_server
@@ -573,6 +575,11 @@ async def run_autowebcompat_repro(
     :class:`AgentError` if the agent ends in an error.
     """
     firefox_browser = FirefoxBrowsers()
+
+    android_dir = Path(tempfile.mkdtemp(prefix="android-"))
+    android.install(android_dir, prompt=False)
+    android.start(android_dir, prompt=False)
+    sys.exit(1)
 
     test_plan_task = TestPlan(default_config, tracker, input_data, bugzilla_mcp_server)
     test_plan_result = await test_plan_task.run()
